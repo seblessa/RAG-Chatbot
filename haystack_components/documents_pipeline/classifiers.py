@@ -1,5 +1,5 @@
 import torch
-from typing import List, Dict
+from typing import List
 from transformers import pipeline  
 from huggingface_hub import login 
 from haystack import Document, component
@@ -132,8 +132,8 @@ class LLMExtractorAzure:
     No final essa resposta é adicionada ao campo no dicionário do documento. doc{..., "meta": {"extracted_info":_______}  
     """  
       
-    @component.output_types(documents=List[Dict])
-    def run(self, documents: List[Dict]):
+    @component.output_types(documents=List[Document])  
+    def run(self, documents: List[Document]):  
 
         endpoint = "https://toolkit-sc.openai.azure.com/"
         deployment = "Geral"  
@@ -144,7 +144,10 @@ class LLMExtractorAzure:
             api_version="2024-05-01-preview",  
         )  
         print("Azure OpenAI API setup completed")  
-
+          
+        # Convert the list of documents to a dataset  
+        texts = [doc.content for doc in documents]  
+        # dataset = Dataset.from_dict({"text": texts})  
           
         # Define the system message  
         system_message = '''És um assistente que fala em Português-Europeu(PT-PT) especializado em extração de intenções e reconhecimento de entidades nomeadas (NER) de textos fornecidos.  
@@ -164,42 +167,43 @@ class LLMExtractorAzure:
             {"role": "user", "content": "Gostava de reservar um voo para Paris na próxima terça-feira."},
             {"role": "assistant", "content": '''{"NER":[{"Paris":"Local"},{"terça-feira":"Data"}], "Intenção": ["Reservar voo"]}'''}, 
         ]
+        # Apply the function to the dataset  
+        # dataset = dataset.map(format_input)  
+          
         # Process the dataset in batches  
         all_results = []  
         print("RUNNING query")  
-        query_start = time.time()
-        for doc in documents["sections"]:
-            js = None
-            tries=0
-            example=doc.content
-            while js is None and example != "" and example and len(example)>10 and tries<5:
-                # print(f"EXAMPLE MSG: {example}")
-                completion = client.chat.completions.create(
-                model=deployment,
-                messages=[
-                    {"role": "system", "content": system_message},
-                ]+examples+[{"role": "user", "content": example}],
-                max_tokens=800,
-                temperature=0.7,
-                top_p=0.95,
-                frequency_penalty=0,
-                presence_penalty=0,
-                stop=None,
-                stream=False
-                )
-                # print(f"GPT RESPONSE: {completion.choices}")
-                try:
-                    js=json.loads(completion.choices[0].message.content)
-                    doc.meta["extracted_info"] = json.dumps(js, ensure_ascii=False)
-                except:
-                    print(f"Failed to parse json: {completion.choices[0].message.content}, original_ content: {example}")
-                    time.sleep(3**tries)
-                    tries+=1
-                    if tries == 5:
-                        print(f"ERROR: Giving up on: {example}")
-
+        query_start = time.time()  
+          
+        for example in texts:
+            # print(f"EXAMPLE MSG: {example}")
+            completion = client.chat.completions.create(  
+            model=deployment,  
+            messages=[  
+                {"role": "system", "content": system_message},  
+            ]+examples+[{"role": "user", "content": example}],  
+            max_tokens=800,  
+            temperature=0.7,  
+            top_p=0.95,  
+            frequency_penalty=0,  
+            presence_penalty=0,  
+            stop=None,  
+            stream=False  
+            )
+            # print(f"GPT RESPONSE: {completion.choices}")
+            try:
+                all_results.append(json.loads(completion.choices[0].message.content))
+            except:
+                print(f"Failed to parse json: {completion.choices[0].message.content}")
+                raise "Json could not be parsed."
+          
         print(f"query took: {time.time() - query_start}")
-
+        print("formatting results")  
+          
+        # Save the output to documents
+        print(f"ALL RESULTS:\n {all_results}")
+        for doc, result in zip(documents, all_results):  
+            doc.meta["extracted_info"] = json.dumps(result, ensure_ascii=False)
           
         print("LLM extractor finish")  
         return {"documents": documents}  

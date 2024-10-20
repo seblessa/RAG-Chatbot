@@ -6,7 +6,7 @@ from haystack import Pipeline, Document
 from haystack.components.joiners.document_joiner import DocumentJoiner as JoinDocuments
 from typing import Dict  
 from haystack import component
-from documents_pipeline.save_stores import get_Osearch_store, get_qdrant_store
+from ..documents_pipeline.save_stores import get_Osearch_store, get_qdrant_store
 from typing import List
   
 # Inicializar o DocumentStore  
@@ -43,7 +43,7 @@ def get_Osearch_docs_from_prompt(prompt, document_store=None, retriever=None):
     if not document_store:  
         document_store = get_Osearch_store()  
     if not retriever:  
-        retriever = OpenSearchBM25Retriever(document_store=document_store, scale_score=True)
+        retriever = OpenSearchBM25Retriever(document_store=document_store)  
       
     query_pipeline = Pipeline()  
     query_pipeline.add_component(name="retriever", instance=retriever)
@@ -68,19 +68,13 @@ class QdrantSearch:
         if not keyword_prompts or not isinstance(keyword_prompts, list):  
             raise ValueError("O dicionário de entrada não contém a chave 'vector_prompt' ou ela não é uma lista.")  
           
-        all_documents = []
-        doc_scores={}
+        all_documents = []  
+  
         for keyword_prompt in keyword_prompts:  
             search_results = get_QDRANT_docs_from_prompt(keyword_prompt)
             # print(search_results)  
             all_documents.extend(search_results["retriever"]['documents'])
-            for doc in search_results["retriever"]['documents']:
-                if doc.id in doc_scores.keys():
-                    if doc.score > doc_scores[doc.id]:
-                        doc_scores[doc.id]=doc.score
-                else:
-                    doc_scores[doc.id]=doc.score
-        return {"documents":all_documents,"search_params":keyword_prompts, "original_scores":doc_scores}
+        return {"documents":all_documents}
 
 @component  
 class OpenSearch:  
@@ -88,25 +82,19 @@ class OpenSearch:
     Componente para fazer a pesquisa na base de dados OpenSearch e guardar os resultados no dicionário prompt_mod.  
     """  
     @component.output_types(documents=List[Document])  
-    def run(self, prompt_mod: Dict):
+    def run(self, prompt_mod: Dict):  
         """  
         Função que obtém a prompt específica para esta pesquisa, chama a função para fazer a pesquisa e  
         guarda o resultado e o score.  
-        """
-        keyword_prompts = prompt_mod.get("keyword_prompt", [])
-        if not keyword_prompts or not isinstance(keyword_prompts, list):
-            raise ValueError("O dicionário de entrada não contém a chave 'keyword_prompt' ou ela não é uma lista.")
-
-        all_documents = []
-        doc_scores={}
+        """  
+        keyword_prompts = prompt_mod.get("keyword_prompt", [])  
+        if not keyword_prompts or not isinstance(keyword_prompts, list):  
+            raise ValueError("O dicionário de entrada não contém a chave 'keyword_prompt' ou ela não é uma lista.")  
+          
+        all_documents = []  
+  
         for keyword_prompt in keyword_prompts:
-            search_results = get_Osearch_docs_from_prompt(keyword_prompt)
+            search_results = get_Osearch_docs_from_prompt(keyword_prompt) 
             # print(f"OSEARCH RET: {search_results}")
-            all_documents.extend(search_results["retriever"]['documents'])
-            for doc in search_results["retriever"]['documents']:
-                if doc.id in doc_scores.keys():
-                    if doc.score > doc_scores[doc.id]:
-                        doc_scores[doc.id]=doc.score
-                else:
-                    doc_scores[doc.id]=doc.score
-        return {"documents":all_documents, "search_params":keyword_prompts, "original_scores":doc_scores}
+            all_documents.extend(search_results["retriever"]['documents']) 
+        return {"documents":all_documents}

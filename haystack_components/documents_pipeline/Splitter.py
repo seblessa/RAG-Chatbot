@@ -1,4 +1,3 @@
-
 from llmsherpa.readers import LayoutPDFReader
 from typing import List
 from haystack import  Document, component

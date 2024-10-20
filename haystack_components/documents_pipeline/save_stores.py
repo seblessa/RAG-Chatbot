@@ -1,7 +1,7 @@
-from typing import  List, Dict
-import os
+
+from typing import  List
+
 from haystack import Document, component
-from haystack.document_stores.types import DuplicatePolicy
 from haystack_integrations.document_stores.qdrant import QdrantDocumentStore
 
 from haystack_integrations.document_stores.opensearch import OpenSearchDocumentStore
@@ -9,9 +9,9 @@ from haystack_integrations.document_stores.opensearch import OpenSearchDocumentS
 
 from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
 
-DEPLOYMENT_DOCUMENT_STORE_INDEX=os.getenv('DEPLOYMENT_DOCUMENT_STORE_INDEX')
 
-def get_qdrant_store(index=DEPLOYMENT_DOCUMENT_STORE_INDEX):
+
+def get_qdrant_store():
     """
 
     Função que localiza a qdrant store a correr no docker.
@@ -22,7 +22,7 @@ def get_qdrant_store(index=DEPLOYMENT_DOCUMENT_STORE_INDEX):
     
     document_store = QdrantDocumentStore(
     url="localhost",
-    index=index,
+    index="Document",
     embedding_dim=768,
     # recreate_index=True, # This will delete ALL existing documents
     hnsw_config={"m": 16, "ef_construct": 64}  # Optional
@@ -30,14 +30,14 @@ def get_qdrant_store(index=DEPLOYMENT_DOCUMENT_STORE_INDEX):
     return document_store
 
  
-def get_Osearch_store(index=DEPLOYMENT_DOCUMENT_STORE_INDEX):
+def get_Osearch_store():
     """
 
     Função que retorna a OpenSearch Store
 
     """
     
-    return OpenSearchDocumentStore(http_auth=("admin","Master_pw_123!#"), use_ssl=True, index=index.lower())
+    return OpenSearchDocumentStore(http_auth=("admin","Master_pw_123!#"), use_ssl=True)
 #set OPENSEARCH_INITIAL_ADMIN_PASSWORD=Master_pw_123!#
 
 @component
@@ -49,11 +49,12 @@ class save_docs_to_Osearch():
 
     """
     
-    @component.output_types(documents=List[Dict])
-    def run(self, documents:List[Dict],document_store=None):
+    @component.output_types(documents=List[Document])
+    def run(self, documents:List[Document],document_store=None):
         if not document_store:
             document_store=get_Osearch_store()
-        document_store.write_documents(documents["sections"], policy=DuplicatePolicy.OVERWRITE)
+        document_store.write_documents(documents)
+        # print(documents)
         return {"documents":documents}
 
 
@@ -69,18 +70,16 @@ class save_docs_to_QDRANT():
     Depois de iniciar o embedder e de ter os embedduings  dos documentos guardamos na base de dados.
 
     """
-    @component.output_types(documents=List[Dict])
-    def run(self, documents:List[Dict],document_store=None,embedder=None):
+    @component.output_types(documents=List[Document])
+    def run(self, documents:List[Document],document_store=None,embedder=None):
         if not document_store:
             document_store=get_qdrant_store()
         if not embedder:
             embedder=SentenceTransformersDocumentEmbedder()
         embedder.warm_up()
-        docs=documents["phrases"]
-        embedded_docs=embedder.run(docs)
+        embedded_docs=embedder.run(documents)
+        document_store.write_documents(embedded_docs.get("documents"))
         # print(embedded_docs)
-        # print(document_store.filter_documents())
-        document_store.write_documents(embedded_docs.get("documents"),policy=DuplicatePolicy.OVERWRITE)
         return {"documents":documents}
     
 

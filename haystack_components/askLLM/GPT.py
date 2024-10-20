@@ -28,6 +28,7 @@ class ASK_LLM:
     @component.output_types()
     def generate(self, prompt, msg_context):
         endpoint = os.getenv("ENDPOINT_URL", "https://toolkit-sc.openai.azure.com/")
+        # deployment = os.getenv("DEPLOYMENT_NAME", "gpt-4o")
         deployment = os.getenv("DEPLOYMENT_NAME","Cheap")
 
         client = AzureOpenAI(
