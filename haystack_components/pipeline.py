@@ -8,15 +8,15 @@ from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter,
 
 from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
 
-from .documents_pipeline.classifiers import NamedEntityExtractor,IntentExtractor,LLMExtractor, LLMExtractorAzure
+from documents_pipeline.classifiers import NamedEntityExtractor,IntentExtractor,LLMExtractor, LLMExtractorAzure
 
-from .documents_pipeline.Splitter import LayoutPDFSplitter
+from documents_pipeline.Splitter import LayoutPDFSplitter
 
-from .prompt_re_eng.llm import LLMPrompt
+from prompt_re_eng.llm import LLMPrompt
 # from .prompt_re_eng.search_stores import QdrantSearch,OpenSearch,get_Osearch_docs_from_prompt,get_QDRANT_docs_from_prompt
-from .documents_pipeline.save_stores import get_Osearch_store,get_qdrant_store,save_docs_to_Osearch,save_docs_to_QDRANT
-from .prompt_re_eng.new_search import QdrantSearch, OpenSearch, JoinDocuments#, SentenceTransformersRanker
-from .askLLM.GPT import ASK_LLM
+from documents_pipeline.save_stores import get_Osearch_store,get_qdrant_store,save_docs_to_Osearch,save_docs_to_QDRANT
+from prompt_re_eng.new_search import QdrantSearch, OpenSearch, JoinDocuments#, SentenceTransformersRanker
+from askLLM.GPT import ASK_LLM
 import time
 
 
@@ -36,9 +36,10 @@ def document_processor_pipeline(doc_path,doc_id):
     # p.add_component("DocCleaner", DocumentCleaner())  
     # p.add_component("Splitter", DocumentSplitter())  
     p.add_component("Splitter",LayoutPDFSplitter())
-
+    p.add_component("NER",NamedEntityExtractor())
+    # p.add_component("INTENT",IntentExtractor())
     # p.add_component("LLM",LLMExtractor())
-    p.add_component("LLM",LLMExtractorAzure())
+    # # p.add_component("LLM",LLMExtractorAzure())
     
     p.add_component("Save_OS",save_docs_to_Osearch())
     p.add_component("Split_Sent",DocumentSplitter(split_by="sentence", split_length=3, split_overlap=0))
@@ -47,8 +48,9 @@ def document_processor_pipeline(doc_path,doc_id):
     # p.connect("PDFconverter", "DocCleaner")  
     # p.connect("DocCleaner", "Splitter") 
 
-    p.connect("Splitter","LLM")
-    p.connect("LLM","Save_OS")
+    p.connect("Splitter","NER")
+    # p.connect("NER","INTENT")
+    p.connect("NER","Save_OS")
     p.connect("Save_OS","Split_Sent")
     p.connect("Split_Sent","Save_QD")
     
@@ -106,8 +108,8 @@ def ask_LLM_with_context(prompt,context):
 # start=time.time()
 
 
-# mydoc=document_processor_pipeline("haystack_components/files/Devoluçoes e Substituiçoes v2.pdf",1)
-
+#mydoc=document_processor_pipeline("sample.pdf",1)
+# print(mydoc)
 
 # print(time.time()-start)
 
@@ -115,12 +117,13 @@ def ask_LLM_with_context(prompt,context):
 
 ## Test query retrieval from DB
 
-# prompt="O IVA está incluido?"
+prompt="When does this Regulation apply?"
 
 ## Using Pipeline
 
-# res=prompt_engineering_pipeline(prompt)
+res=prompt_engineering_pipeline(prompt)
 
+print(res)
 ## Manually 
 
 # res_O=get_Osearch_docs_from_prompt(prompt)

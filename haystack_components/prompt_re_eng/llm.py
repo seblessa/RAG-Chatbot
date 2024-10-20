@@ -16,7 +16,8 @@ sys = '''
         Certifique-se de que ambas as consultas resultantes são claras, concisas e diretamente relacionadas à intenção do utilizador.  
           
         Devolve as perguntas modificadas em formato JSON com as chaves "keyword_prompt" e "vector_prompt". Nunca podes enviar listas vazias.
-        formato da resposta: {"vector_prompt":["string de pesquisa 1","string de pesquisa 2", "mais strings de pesquisa"],"keyword_prompt":[["grupo1_string1","grupo1_string2","grupo1_string3"],["grupo2_string1","grupo2_string2",][outros grupos]]}
+        formato da resposta: {"vector_prompt":["string de pesquisa 1","string de pesquisa 2", "mais strings de pesquisa"],"keyword_prompt":[["grupo1_string1","grupo1_string2","grupo1_string3"],["grupo2_string1","grupo2_string2",],[outros grupos]]}
+        Assegura-te que envias um JSON valido
     '''
 
 msg_history_example='''
@@ -72,8 +73,30 @@ class LLMPrompt:
         return response_content
     
     @component.output_types(prompt_mod=Dict)  
-    def run(self, user_prompt: str):  
-        response = self.generate(user_prompt)  
+    def run(self, user_prompt: str):
+        response=None
+        while response is None:
+            response = self.generate(user_prompt)
+            
+            try:
+                response_json = json.loads(response)  
+            except:  
+                response = None
+                continue
+            
+            
+            keyword_prompts = response_json.get("keyword_prompt", [])
+            if not keyword_prompts or not isinstance(keyword_prompts, list):
+                response = None 
+                continue
+            
+        
+            vector_prompts = response_json.get("vector_prompt", [])
+            if not vector_prompts or not isinstance(vector_prompts, list):
+                response = None 
+                continue
+
+            break
   
         # Assumindo que a resposta do LLM será um JSON válido
         print(f"PROMPT RE_ENGI: {response}")
@@ -84,4 +107,3 @@ class LLMPrompt:
             "keyword_prompt": response_json.get("keyword_prompt"),  
             "vector_prompt": response_json.get("vector_prompt")  
         } }
-  
