@@ -1,0 +1,12 @@
+.env
+venv/
+*.json
+*.pdf
+*.sqlite3
+.idea*
+newreq.txt
+docker_mands.txt
+.venv/
+*.pyc
+*.jpeg
+*.png
