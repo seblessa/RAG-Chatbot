@@ -4,6 +4,13 @@ import json
 import os
 from openai import AzureOpenAI
 
+from transformers import AutoTokenizer,AutoModelForCausalLM,BitsAndBytesConfig
+import torch
+
+from huggingface_hub import InferenceClient
+
+
+
 
 # Prompt de sistema para transformar a prompt do user em duas prompts distintas uma para keywords e outra para pesquisa vetorial
 
@@ -43,40 +50,48 @@ class LLMPrompt:
     """
     
 
-    @component.output_types()
-    def generate(self, text):  
-        endpoint = os.getenv("ENDPOINT_URL", "https://toolkit-sc.openai.azure.com/")  
-        # deployment = os.getenv("DEPLOYMENT_NAME", "Geral")
-        deployment = os.getenv("DEPLOYMENT_NAME", "Cheap")
-  
-        client = AzureOpenAI(  
-            azure_endpoint=endpoint,  
-            api_key=os.getenv("DEPLOYMENT_KEY"),
-            api_version="2024-05-01-preview",  
-        )  
-        completion = client.chat.completions.create(  
-            model=deployment,  
-            messages=[  
-                {"role": "system", "content": sys}]+
-                examples+
-                [{"role": "user", "content": text}],  
-            max_tokens=800,  
-            temperature=0.7,  
-            top_p=0.95,  
-            frequency_penalty=0,  
-            presence_penalty=0,  
-            stop=None,  
-            stream=False  
-        )  
-          
-        response_content = completion.choices[0].message.content  
-        return response_content
-    
+    def load_model(self,model_path: str):
+        # Load the tokenizer
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+
+        # Load the model with quantization and device mapping
+        model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            device_map=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
+        )
+
+        return model, tokenizer
+
+
+    def answer_question(self, question, max_length=1000, temperature=0.7):
+        client = InferenceClient(api_key="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")
+
+        messages=[{"role": "system", "content": sys}]+ examples+[{"role": "user", "content": question}]
+
+        stream = client.chat.completions.create(
+            model="meta-llama/Llama-3.2-1B-Instruct", 
+            messages=messages, 
+            temperature=0.5,
+            max_tokens=1024,
+            top_p=0.7,
+            stream=True
+        )
+
+        full_response = ""
+
+        # Iterar sobre cada chunk, acumulando o conteúdo
+        for chunk in stream:
+            full_response += chunk.choices[0].delta.content  # ou "text", dependendo da estrutura do chunk
+
+        # Imprimir toda a resposta junta
+        return full_response
+        
     @component.output_types(prompt_mod=Dict)  
     def run(self, user_prompt: str):
         response=None
         while response is None:
-            response = self.generate(user_prompt)
+            response = self.answer_question(user_prompt)
+            print(response)
             
             try:
                 response_json = json.loads(response)  

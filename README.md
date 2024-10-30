@@ -27,6 +27,7 @@ Answer: An "implantable device" means any device intended to be totally introduc
 Question: Does this Regulation apply to cosmetic products?
 
 Answer: No, this Regulation does not apply to cosmetic products covered by Regulation (EC) No 1223/2009 .
+
 Question: What is the definition of "Unique Device Identifier" (UDI)?
 
 Answer: "Unique Device Identifier" (UDI) means a series of numeric or alphanumeric characters that is created through internationally accepted device identification and coding standards and that allows unambiguous identification of specific devices on the market .

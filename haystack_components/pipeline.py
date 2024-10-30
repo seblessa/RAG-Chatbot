@@ -122,6 +122,7 @@ prompt="When does this Regulation apply?"
 ## Using Pipeline
 
 res=prompt_engineering_pipeline(prompt)
+res_fim=ask_LLM_with_context(prompt,res)
 
 print(res)
 ## Manually 

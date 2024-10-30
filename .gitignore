@@ -1,7 +1,6 @@
 .env
 venv/
 *.json
-*.pdf
 *.sqlite3
 .idea*
 newreq.txt

@@ -4,6 +4,14 @@ import json
 import os
 from openai import AzureOpenAI
 
+from huggingface_hub import InferenceClient
+
+from transformers import AutoTokenizer
+
+# Carrega o tokenizer do modelo que estás a usar. Substitui pelo modelo desejado, ex: 'bert-base-uncased'
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
+
 sys = '''
         Tu és um assistente altamente eficiente especializado em responder a perguntas relacionadas com o contexto fornecido.  
         
@@ -27,40 +35,38 @@ class ASK_LLM:
 
     @component.output_types()
     def generate(self, prompt, msg_context):
-        endpoint = os.getenv("ENDPOINT_URL", "https://toolkit-sc.openai.azure.com/")
-        # deployment = os.getenv("DEPLOYMENT_NAME", "gpt-4o")
-        deployment = os.getenv("DEPLOYMENT_NAME","Cheap")
 
-        client = AzureOpenAI(
-            azure_endpoint=endpoint,
-            api_key=os.getenv("DEPLOYMENT_KEY"),
-            api_version="2024-05-01-preview",
+        client = InferenceClient(api_key="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")
+
+        messages=[{"role": "system", "content": sys}]+[{"role": "user", "content": msg_context}] + [{"role": "user", "content":prompt}]
+        
+        # print("Número de tokens em cada documento:", token_counts)
+        # print("Total de tokens:", sum(token_counts))
+        stream = client.chat.completions.create(
+            model="meta-llama/Llama-3.2-1B-Instruct", 
+            messages=messages, 
+            temperature=0.5,
+            max_tokens=1024,
+            top_p=0.7,
+            stream=True
         )
-        completion = client.chat.completions.create(
-            model=deployment,
-            messages=[{"role": "system", "content": sys},{"role": "system", "content": msg_context}] +
-                     prompt,
-            max_tokens=1800,
-            temperature=0.7,
-            top_p=0.95,
-            frequency_penalty=0,
-            presence_penalty=0,
-            stop=None,
-            stream=False
-        )
-        # print([{"role": "system", "content": sys},{"role": "system", "content": msg_context}] +
-        #              prompt)
-        response_content = completion.choices[0].message.content
-        return response_content
+
+        full_response = ""
+
+        # Iterar sobre cada chunk, acumulando o conteúdo
+        for chunk in stream:
+            full_response += chunk.choices[0].delta.content  # ou "text", dependendo da estrutura do chunk
+
+        # Imprimir toda a resposta junta
+        return full_response
 
     def build_context(self,context):
         return
 
     @component.output_types(response=Dict)
-    def run(self, prompt: List, context:Dict):
-        grouped_context=group_documents(context["used_context"]["selected_documents"])
-        grouped_context_str=json.dumps(grouped_context,ensure_ascii=False)
-        response = self.generate(prompt, grouped_context_str)
+    def run(self, prompt: List, context): 
+        conteudo = [doc.content for doc in context['JoinDocuments']['documents']]       
+        response = self.generate(prompt, conteudo)
         return {"response":response}
 
 
