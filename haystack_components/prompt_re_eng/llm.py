@@ -15,27 +15,27 @@ from huggingface_hub import InferenceClient
 # Prompt de sistema para transformar a prompt do user em duas prompts distintas uma para keywords e outra para pesquisa vetorial
 
 sys = '''
-        Você é um assistente altamente eficiente especializado em transformar perguntas de utilizadores em duas consultas otimizadas: uma para pesquisa por keywords em bases de dados OpenSearch e outra para pesquisa vetorial em bases de dados Qdrant. A sua tarefa é pegar na pergunta original do utilizador e gerar duas consultas que maximizem a relevância dos resultados.  
-        Nota que receberás um historico da conversa de forma a poderes especificar melhor os parametros de pesquisa.
-        - Para a consulta por keywords, foque-se nas palavras-chave mais importantes.  
-        - Para a consulta vetorial, capture a essência semântica da pergunta.  
-  
-        Certifique-se de que ambas as consultas resultantes são claras, concisas e diretamente relacionadas à intenção do utilizador.  
-          
-        Devolve as perguntas modificadas em formato JSON com as chaves "keyword_prompt" e "vector_prompt". Nunca podes enviar listas vazias.
-        formato da resposta: {"vector_prompt":["string de pesquisa 1","string de pesquisa 2", "mais strings de pesquisa"],"keyword_prompt":[["grupo1_string1","grupo1_string2","grupo1_string3"],["grupo2_string1","grupo2_string2",],[outros grupos]]}
-        Assegura-te que envias um JSON valido
-    '''
+You are a highly efficient assistant specialized in transforming user questions into two optimized queries: one for keyword search in OpenSearch databases and another for vector search in Qdrant databases. Your task is to take the user's original question and generate two queries that maximize the relevance of the results.
+Note that you will receive a conversation history to better specify the search parameters.
 
-msg_history_example='''
-                {"role": "user", "content": "Existe a possibilidade da empresa soferer ataques de cibersegurança?"}
-                {"role": "assistant", "content": "Sim, existe sempre uma possibilidade da empresa sofrer ataques te diferentes tipos." }
-                {"role": "user", "content": "Quais são as ameaças de cibersegurança mais comuns?"}
-'''
-examples=[
-        {"role": "user", "content": msg_history_example},
-        {"role": "assistant", "content": '''{"vector_prompt":["ameaças cibersegurança comuns","ameaças segurança cibernética","cibersegurança riscos comuns","ameaças comuns cibersegurança","segurança cibernética ameaças frequentes"],"keyword_prompt":[["ameaças","cibersegurança","comuns"],["ameaças","segurança cibernética"],["cibersegurança","riscos comuns"]]}'''}  
-]
+For the keyword query, focus on the most important keywords.
+For the vector query, capture the semantic essence of the question.
+Ensure that both resulting queries are clear, concise, and directly related to the user's intent.
+
+Return the modified questions in JSON format with the keys "keyword_prompt" and "vector_prompt." You must never send empty lists.
+Response format: {"vector_prompt":["search string 1","search string 2", "more search strings"],"keyword_prompt":[["group1_string1","group1_string2","group1_string3"],["group2_string1","group2_string2"],[other groups]]}
+Make sure to send a valid JSON.
+    '''
+msg_history_example='''  
+                {"role": "user", "content": "Is there a possibility of the company suffering from cybersecurity attacks?"}  
+                {"role": "assistant", "content": "Yes, there is always a possibility of the company facing attacks of different types."}  
+                {"role": "user", "content": "What are the most common cybersecurity threats?"}  
+'''  
+examples=[  
+        {"role": "user", "content": msg_history_example},  
+        {"role": "assistant", "content": '''{"vector_prompt":["common cybersecurity threats","cybersecurity threats","common risks of cybersecurity","frequent cybersecurity threats","cybersecurity threats"],"keyword_prompt":[["threats","cybersecurity","common"],["threats","cybersecurity"],["cybersecurity","common risks"]]}'''}  
+]  
+
 
 @component
 class LLMPrompt:  
@@ -48,19 +48,6 @@ class LLMPrompt:
 
     
     """
-    
-
-    def load_model(self,model_path: str):
-        # Load the tokenizer
-        tokenizer = AutoTokenizer.from_pretrained(model_path)
-
-        # Load the model with quantization and device mapping
-        model = AutoModelForCausalLM.from_pretrained(
-            model_path,
-            device_map=torch.device("cuda" if torch.cuda.is_available() else "cpu"),
-        )
-
-        return model, tokenizer
 
 
     def answer_question(self, question, max_length=1000, temperature=0.7):

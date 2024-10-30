@@ -13,15 +13,14 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
 
 sys = '''
-        Tu és um assistente altamente eficiente especializado em responder a perguntas relacionadas com o contexto fornecido.  
-        
-        Deves usar apenas o contexto fornecido para responder a perguntas;
-        Quando este não tiver a informação necessária para responder, deves pedir mais informações ou dizer que essa informação não consta na tua base de dados
-        Responde sempre em Português de portugal (europeu).
-        Usa sempre markdown na tua resposta.
+        You are a highly efficient assistant specialized in answering questions related to the provided context.
+
+You should use only the provided context to answer questions;
+When it does not contain the necessary information to respond, you should ask for more information or state that this information is not in your database.
+Always use markdown in your response.
     '''
 examples = []
-MAX_CONTEXT_TOKENS=int(os.getenv("MAX_CONTEXT_TOKENS",4000))
+
 @component
 class ASK_LLM:
     """
@@ -37,11 +36,11 @@ class ASK_LLM:
     def generate(self, prompt, msg_context):
 
         client = InferenceClient(api_key="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")
-
-        messages=[{"role": "system", "content": sys}]+[{"role": "user", "content": msg_context}] + [{"role": "user", "content":prompt}]
+        joined=" ".join(msg_context)
+        print(msg_context)
+        messages=[{"role": "system", "content": sys}]+[{"role": "user", "content": joined}] + [{"role": "user", "content":prompt}]
         
-        # print("Número de tokens em cada documento:", token_counts)
-        # print("Total de tokens:", sum(token_counts))
+
         stream = client.chat.completions.create(
             model="meta-llama/Llama-3.2-1B-Instruct", 
             messages=messages, 
@@ -66,35 +65,29 @@ class ASK_LLM:
     @component.output_types(response=Dict)
     def run(self, prompt: List, context): 
         conteudo = [doc.content for doc in context['JoinDocuments']['documents']]       
+        conteudo=get_limited_context(context)
+        
         response = self.generate(prompt, conteudo)
         return {"response":response}
 
 
-from collections import defaultdict
+def get_limited_context(context):
+    conteudo = [doc.content for doc in context['JoinDocuments']['documents']]
+    token_counts = [len(tokenizer.tokenize(text)) for text in conteudo]
+    
+    print("Número de tokens em cada documento:", token_counts)
+    print("Total de tokens:", sum(token_counts))
 
+    limited_context = []
+    total_tokens = 0
 
-def group_documents(selected_documents):
-    grouped = defaultdict(lambda: defaultdict(list))
-    used_tokens=0
-    for doc in selected_documents:
-        section = doc['section']
-        section_id = section['id']
-        score = doc['score']
+    for text, count in zip(conteudo, token_counts):
+        # Verifica se adicionar o próximo documento ultrapassará o limite
+        if total_tokens + count <= 4000:
+            limited_context.append(text)
+            total_tokens += count
+        else:
+            break  # Sai do loop se o limite for alcançado
 
-        page = section['parent']
-        page_number = page['page_number']
-
-        parent_doc = page['parent']
-        parent_id = parent_doc['id']
-        filename = parent_doc['filename']
-
-        grouped[filename][page_number].append({
-            "score": score,
-            'section_id': section_id,
-            'raw_content': section['raw_content']
-            # 'extracted_information': section['extracted_information']
-        })
-        used_tokens+=section["num_tokens"]
-        if used_tokens >= MAX_CONTEXT_TOKENS:
-            return grouped
-    return grouped
+    print("Número total de tokens após limitação:", total_tokens)
+    return limited_context
