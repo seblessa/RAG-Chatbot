@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Simple Chat</title>
+    <style>
+        body {
+            background-color: #292929;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
+        }
+        #disclaimer {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        #watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        #watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.2;
+            z-index: -1;
+        }
+
+        #messages {
+            height: calc(100vh - 150px);
+            overflow-y: scroll;
+            padding: 10px;
+        }
+
+        #messages .message {
+            display: flex;
+            flex-direction: row;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+        }
+
+        #messages .message .message-text {
+            border-radius: 5px;
+            padding: 10px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        #messages .message.sent .message-text {
+            background-color: #008000;
+            color: #fff;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+
+        #messages .message.received .message-text {
+            background-color: #0000FF;
+            color: #fff;
+            align-self: flex-start;
+            margin-right: auto;
+        }
+
+        #input {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #3e3e3e;
+            padding: 10px;
+        }
+
+        #input input[type="text"] {
+            border-radius: 20px;
+            border: none;
+            width: 800px;
+            background-color: #fff;
+            padding: 15px;
+            flex: 1;
+        }
+
+        #input button {
+            border-radius: 20px;
+            border: none;
+            background-color: #0084ff;
+            color: #fff;
+            padding: 15px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        #disclaimer {
+            font-size: 12px;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div id="watermark">
+    <h1>Personal Psychologist</h1>
+</div>
+<div id="messages">
+    {% for m in messages %}
+        <div class="message {{ 'sent' if m[0] == 'sender' else 'received' }}">
+            <div class="message-text">{{ m[1] }}</div>
+        </div>
+    {% endfor %}
+</div>
+<div id="input">
+    <form method="POST" action="{{ url_for('index') }}">
+        <label>
+            <input type="text" name="message" placeholder="Type your message here">
+        </label>
+        <button type="submit">Send</button>
+    </form>
+</div>
+<div id="disclaimer">
+    <p>I will help you with questions related to mental health.</p>
+</div>
+<script>
+    const messagesDIV = document.getElementById("messages");
+    messagesDIV.scrollTop = messagesDIV.scrollHeight;
+</script>
+</body>
+</html>
