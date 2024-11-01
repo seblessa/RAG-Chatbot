@@ -6,7 +6,7 @@ from haystack import Pipeline, Document
 from haystack.components.joiners.document_joiner import DocumentJoiner as JoinDocuments
 from typing import Dict  
 from haystack import component
-from documents_pipeline.save_stores import get_Osearch_store, get_qdrant_store
+from ..documents_pipeline.save_stores import get_Osearch_store, get_qdrant_store
 from typing import List
   
 # Inicializar o DocumentStore  

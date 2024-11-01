@@ -1,115 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Simple Chat</title>
+    <title>RAG Chat Interface</title>
     <style>
-        body {
-            background-color: #292929;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            font-size: 16px;
-            line-height: 1.5;
+        /* Estilos básicos de reset e fonte */
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
-        #disclaimer {
-            font-size: 12px;
-            text-align: center;
-            margin-top: 20px;
-        }
-        #watermark {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0.2;
-            z-index: -1;
+        body {
+            background: linear-gradient(135deg, #141e30, #243b55);
+            color: #e0e0e0;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        #watermark {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            opacity: 0.2;
-            z-index: -1;
+        #header {
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+            background-color: rgba(0,0,0,0.6);
+            color: #ffdd57;
+            box-shadow: 0px 4px 8px rgba(0,0,0,0.5);
         }
 
         #messages {
-            height: calc(100vh - 150px);
-            overflow-y: scroll;
-            padding: 10px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: rgba(0,0,0,0.3);
         }
 
-        #messages .message {
+        /* Estilo para as mensagens */
+        .message {
             display: flex;
-            flex-direction: row;
-            justify-content: flex-start;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            font-size: 15px;
         }
 
-        #messages .message .message-text {
-            border-radius: 5px;
-            padding: 10px;
-            max-width: 80%;
-            word-wrap: break-word;
-        }
-
-        #messages .message.sent .message-text {
-            background-color: #008000;
+        .message.sent .message-text {
+            background: linear-gradient(135deg, #56ccf2, #2f80ed);
             color: #fff;
-            align-self: flex-end;
             margin-left: auto;
+            border-radius: 15px 15px 0 15px;
+            align-self: flex-end;
         }
 
-        #messages .message.received .message-text {
-            background-color: #0000FF;
+        .message.received .message-text {
+            background: linear-gradient(135deg, #fab7a6, #ecbd98);
             color: #fff;
-            align-self: flex-start;
             margin-right: auto;
+            border-radius: 15px 15px 15px 0;
         }
 
+        .message-text {
+            padding: 14px;
+            max-width: 70%;
+            word-wrap: break-word;
+            box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Estilo da barra de entrada */
         #input {
             display: flex;
-            flex-direction: row;
-            justify-content: center;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background-color: #3e3e3e;
-            padding: 10px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
         }
 
         #input input[type="text"] {
-            border-radius: 20px;
-            border: none;
-            width: 800px;
-            background-color: #fff;
-            padding: 15px;
             flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            border: none;
+            border-radius: 30px;
+            background-color: #333;
+            color: #e0e0e0;
+            outline: none;
+            margin-right: 10px;
         }
 
         #input button {
-            border-radius: 20px;
+            padding: 12px 20px;
+            font-size: 16px;
             border: none;
-            background-color: #0084ff;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #ff8a00, #e52e71);
             color: #fff;
-            padding: 15px;
-            margin-left: 10px;
             cursor: pointer;
+            transition: background 0.3s;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
         }
 
-        #disclaimer {
-            font-size: 12px;
-            text-align: center;
-            margin-top: 20px;
+        #input button:hover {
+            background: linear-gradient(135deg, #e52e71, #ff8a00);
+        }
+
+        /* Barra de rolagem personalizada */
+        #messages::-webkit-scrollbar {
+            width: 8px;
+        }
+        #messages::-webkit-scrollbar-thumb {
+            background-color: #555;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
-<div id="watermark">
-    <h1>Medical Advisor</h1>
+<div id="header">
+    <h3>M:IA TAAC</h1>
 </div>
+
 <div id="messages">
     {% for m in messages %}
         <div class="message {{ 'sent' if m[0] == 'sender' else 'received' }}">
@@ -117,20 +123,102 @@
         </div>
     {% endfor %}
 </div>
+
 <div id="input">
-    <form method="POST" action="{{ url_for('index') }}">
-        <label>
-            <input type="text" name="message" placeholder="Type your message here">
-        </label>
+    <form id="chatForm" style="display: flex; width: 100%;">
+        <input type="text" id="userMessage" placeholder="Type your message here..." required>
         <button type="submit">Send</button>
     </form>
+    <!-- Botão para selecionar ficheiro -->
+    <button id="uploadButton">Upload File</button>
+    <input type="file" id="fileInput" style="display: none;">
 </div>
-<div id="disclaimer">
-    <p>I will help you with medical questions.</p>
-</div>
+
 <script>
-    const messagesDIV = document.getElementById("messages");
+    document.getElementById('uploadButton').addEventListener('click', function() {
+        document.getElementById('fileInput').click();
+    });
+    
+    document.getElementById('fileInput').addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('file', file);
+    
+            fetch('/upload_file', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('File uploaded successfully!');
+                } else {
+                    alert('File upload failed.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    });
+    </script>
+    
+
+<script>
+document.getElementById('chatForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const message = document.getElementById('userMessage').value;
+    const messagesDiv = document.getElementById('messages');
+
+    // Exibe a mensagem do usuário imediatamente
+    const userMessageDiv = document.createElement('div');
+    userMessageDiv.classList.add('message', 'sent');
+    userMessageDiv.innerHTML = `<div class="message-text">${message}</div>`;
+    messagesDiv.appendChild(userMessageDiv);
+    
+    document.getElementById('userMessage').value = '';
+
+    // Placeholder para a resposta do bot
+    const botMessageDiv = document.createElement('div');
+    botMessageDiv.classList.add('message', 'received');
+    botMessageDiv.innerHTML = `<div class="message-text">...</div>`;
+    messagesDiv.appendChild(botMessageDiv);
+
+    // Envia a mensagem para o servidor
+    await fetch('/send_message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+    });
+
+    // Recebe a resposta em streaming
+    const response = await fetch('/stream_response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullResponse = '';
+
+    // Lê a resposta em partes e exibe gradualmente
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        fullResponse += decoder.decode(value, { stream: true });
+        botMessageDiv.innerHTML = `<div class="message-text">${fullResponse}</div>`;
+    }
+});
+</script>
+
+<script>
+    const messagesDIV = document.getElementByaId("messages");
     messagesDIV.scrollTop = messagesDIV.scrollHeight;
 </script>
+
+
+
 </body>
 </html>

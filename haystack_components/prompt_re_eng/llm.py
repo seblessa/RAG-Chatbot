@@ -73,39 +73,51 @@ class LLMPrompt:
         # Imprimir toda a resposta junta
         return full_response
         
-    @component.output_types(prompt_mod=Dict)  
+    @component.output_types(prompt_mod=Dict)
     def run(self, user_prompt: str):
-        response=None
-        while response is None:
+        max_attempts = 3  # Define o número máximo de tentativas
+        attempts = 0
+        response = None
+
+        while attempts < max_attempts:
             response = self.answer_question(user_prompt)
             print(response)
-            
+
             try:
-                response_json = json.loads(response)  
-            except:  
+                response_json = json.loads(response)
+            except json.JSONDecodeError:
                 response = None
-                continue
-            
-            
-            keyword_prompts = response_json.get("keyword_prompt", [])
-            if not keyword_prompts or not isinstance(keyword_prompts, list):
-                response = None 
-                continue
-            
-        
-            vector_prompts = response_json.get("vector_prompt", [])
-            if not vector_prompts or not isinstance(vector_prompts, list):
-                response = None 
+                attempts += 1
                 continue
 
+            keyword_prompts = response_json.get("keyword_prompt", [])
+            vector_prompts = response_json.get("vector_prompt", [])
+
+            if not (isinstance(keyword_prompts, list) and isinstance(vector_prompts, list)):
+                response = None
+                attempts += 1
+                continue
+
+            # Se a resposta for válida, sai do loop
             break
-  
+        else:
+            # Se atingir o número máximo de tentativas, retorna a prompt original formatada
+            return {
+                "prompt_mod": {
+                    "original_prompt": user_prompt,
+                    "keyword_prompt": [user_prompt],
+                    "vector_prompt": [user_prompt]
+                }
+            }
+
         # Assumindo que a resposta do LLM será um JSON válido
         print(f"PROMPT RE_ENGI: {response}")
-        response_json = json.loads(response)  
+        response_json = json.loads(response)
         print(f"NEW QUERY: {response_json}")
-        return {"prompt_mod":{  
-            "original_prompt": user_prompt,  
-            "keyword_prompt": response_json.get("keyword_prompt"),  
-            "vector_prompt": response_json.get("vector_prompt")  
-        } }
+        return {
+            "prompt_mod": {
+                "original_prompt": user_prompt,
+                "keyword_prompt": response_json.get("keyword_prompt"),
+                "vector_prompt": response_json.get("vector_prompt")
+            }
+        }

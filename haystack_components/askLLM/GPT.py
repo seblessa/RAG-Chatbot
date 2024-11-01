@@ -13,12 +13,24 @@ tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
 
 sys = '''
-        You are a highly efficient assistant specialized in answering questions related to the provided context.
+        You are a concise and highly efficient assistant specializing in answering questions based solely on the provided context.
 
-You should use only the provided context to answer questions;
-When it does not contain the necessary information to respond, you should ask for more information or state that this information is not in your database.
-Always use markdown in your response.
-    '''
+- Only use the provided context to answer questions.
+- If the context lacks the necessary information, briefly ask for more information or state that this information is not available.
+- Always respond in plain text.
+- Prioritize brevity: give the shortest possible answer that fully addresses the question.
+- Limit responses to one or two sentences.
+
+Example 1:
+Q: What are the obligations of manufacturers under this regulation?
+A:Manufacturers must ensure devices comply with safety and performance standards, conduct clinical evaluations, maintain technical documentation, and keep devices in conformity throughout their lifecycle.
+Example 2:
+Q:Who is responsible for regulatory compliance in a manufacturer’s organization?
+A:A designated individual responsible for regulatory compliance, possessing specific qualifications in medical device regulation, must be available.
+Example 3:
+Q:What obligations do importers have under the regulation?
+A:Importers must verify conformity, register devices, provide samples if required, and report risks.'''
+
 examples = []
 
 @component
@@ -36,22 +48,23 @@ class ASK_LLM:
     def generate(self, prompt, msg_context):
 
         client = InferenceClient(api_key="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")
-        joined=" ".join(msg_context)
-        print(msg_context)
-        messages=[{"role": "system", "content": sys}]+[{"role": "user", "content": joined}] + [{"role": "user", "content":prompt}]
+        joined=" ".join(msg_context)    
+        messages=[{"role": "system", "content": sys}]+[{"role": "system", "content": joined}] + [{"role": "user", "content": str(prompt) + "Respond with a brief, precise answer. Avoid unnecessary details and repetitions. Keep it within one or two sentences only."}]
+
         
 
         stream = client.chat.completions.create(
             model="meta-llama/Llama-3.2-1B-Instruct", 
             messages=messages, 
-            temperature=0.5,
-            max_tokens=1024,
-            top_p=0.7,
+            temperature=0.1,
+            max_tokens=512,
+            top_p=0.5,
             stream=True
         )
 
         full_response = ""
 
+        
         # Iterar sobre cada chunk, acumulando o conteúdo
         for chunk in stream:
             full_response += chunk.choices[0].delta.content  # ou "text", dependendo da estrutura do chunk
@@ -83,7 +96,7 @@ def get_limited_context(context):
 
     for text, count in zip(conteudo, token_counts):
         # Verifica se adicionar o próximo documento ultrapassará o limite
-        if total_tokens + count <= 4000:
+        if total_tokens + count <= 1000:
             limited_context.append(text)
             total_tokens += count
         else:

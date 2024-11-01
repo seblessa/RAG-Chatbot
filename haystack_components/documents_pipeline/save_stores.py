@@ -5,7 +5,7 @@ from haystack import Document, component
 from haystack_integrations.document_stores.qdrant import QdrantDocumentStore
 
 from haystack_integrations.document_stores.opensearch import OpenSearchDocumentStore
-
+from haystack.document_stores.types import DuplicatePolicy
 
 from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
 
@@ -53,7 +53,7 @@ class save_docs_to_Osearch():
     def run(self, documents:List[Document],document_store=None):
         if not document_store:
             document_store=get_Osearch_store()
-        document_store.write_documents(documents)
+        document_store.write_documents(documents,policy=DuplicatePolicy.OVERWRITE)
         # print(documents)
         return {"documents":documents}
 
@@ -78,7 +78,7 @@ class save_docs_to_QDRANT():
             embedder=SentenceTransformersDocumentEmbedder()
         embedder.warm_up()
         embedded_docs=embedder.run(documents)
-        document_store.write_documents(embedded_docs.get("documents"))
+        document_store.write_documents(embedded_docs.get("documents"),policy=DuplicatePolicy.OVERWRITE)
         # print(embedded_docs)
         return {"documents":documents}
     
@@ -145,4 +145,4 @@ def delete_Osearch_doc(doc_id):
     return
 ## Descomentar e correr o ficheiro para eliminar da base de dados OpenSearch
 
-# delete_documents_from_opensearch() 
+#delete_documents_from_opensearch() 
