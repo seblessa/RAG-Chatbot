@@ -8,20 +8,20 @@ from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter,
 
 #from haystack.components.embedders import SentenceTransformersTextEmbedder, SentenceTransformersDocumentEmbedder
 
-from documents_pipeline.classifiers import NamedEntityExtractor  #,IntentExtractor,LLMExtractor, LLMExtractorAzure
+from .documents_pipeline.classifiers import NamedEntityExtractor  #,IntentExtractor,LLMExtractor, LLMExtractorAzure
 
-from documents_pipeline.Splitter import LayoutPDFSplitter
+from .documents_pipeline.Splitter import LayoutPDFSplitter
 
-from prompt_re_eng.llm import LLMPrompt
+from .prompt_re_eng.llm import LLMPrompt
 # from .prompt_re_eng.search_stores import QdrantSearch,OpenSearch,get_Osearch_docs_from_prompt,get_QDRANT_docs_from_prompt
-from documents_pipeline.save_stores import get_Osearch_store, get_qdrant_store, save_docs_to_Osearch, \
+from .documents_pipeline.save_stores import get_Osearch_store, get_qdrant_store, save_docs_to_Osearch, \
     save_docs_to_QDRANT
-from prompt_re_eng.new_search import QdrantSearch, OpenSearch, JoinDocuments  #, SentenceTransformersRanker
-from askLLM.GPT import ASK_LLM
+from .prompt_re_eng.new_search import QdrantSearch, OpenSearch, JoinDocuments  #, SentenceTransformersRanker
+from .askLLM.GPT import ASK_LLM
 import time
 
 
-def document_processor_pipeline(doc_path, doc_id):
+def document_processor_pipeline(doc_path, doc_id=1):
     """
     Processa e guarda um documento nas bases de dados.
 
@@ -110,7 +110,7 @@ def ask_LLM_with_context(prompt, context):
 # start=time.time()
 
 
-mydoc = document_processor_pipeline("../sample.pdf", 1)
+# mydoc = document_processor_pipeline("../sample.pdf", 1)
 # print(mydoc)
 
 # print(time.time()-start)

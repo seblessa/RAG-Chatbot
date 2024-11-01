@@ -48,11 +48,15 @@ class LayoutPDFSplitter():
                         }  
                     )  
                     formatted_documents.append(document) 
-
+            try:
                 texto_atual = ' '.join(item['sentences'])  
+            except:
+                continue
             else:  
-                texto_atual += ' ' + ' '.join(item['sentences'])  
-  
+                try:
+                    texto_atual += ' ' + ' '.join(item['sentences'])  
+                except:
+                    continue
         # Adiciona o último texto processado  
         if texto_atual:  
             document = Document(  

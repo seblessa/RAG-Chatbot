@@ -1,33 +1,67 @@
-# RAG_TAAC
+# Projeto RAG (Retrieval-Augmented Generation)
 
+Este projeto implementa um sistema de RAG utilizando Qdrant, OpenSearch e LLMSherpa para indexação e recuperação de documentos. O sistema permite fazer perguntas a partir de documentos carregados.
 
-Na doc pipeline usamos tambem a determinada altura um intent exctraction mas decidimos retirar visto que não melhorava os resultados porque não existem bem intenções nos textos que vamos pesquisar.
+## Requisitos
 
+- **Python** 3.12.0
+- **Docker Desktop** (para executar Qdrant, OpenSearch e LLMSherpa)
 
-##TESTE
+## Setup do Ambiente
 
-Question: What is the full title of Regulation (EU) 2017/745?
+1. **Instalar os requisitos:**
+   - Crie um ambiente virtual e ative-o:
+     ```bash
+     python -m venv venv
+     source venv/bin/activate  # Para Linux/Mac
+     .\venv\Scripts\activate  # Para Windows
+     ```
+   - Instale as dependências necessárias:
+     ```bash
+     pip install -r requirements.txt
+     ```
 
-Answer: REGULATION (EU) 2017/745 OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL on medical devices, amending Directive 2001/83/EC, Regulation (EC) No 178/2002 and Regulation (EC) No 1223/2009 and repealing Council Directives 90/385/EEC and 93/42/EEC.
-Question: When does this Regulation apply?
+2. **Instalar e configurar o Docker Desktop.**
 
-Answer: This Regulation shall apply as from the date of application of common specifications adopted pursuant to Article 9, specifically from 26 May 2021 .
-Question: What does the term "medical device" mean according to the Regulation?
+3. **Executar os serviços necessários:**
 
-Answer: A "medical device" means any instrument, apparatus, appliance, software, implant, reagent, material or other article intended by the manufacturer to be used, alone or in combination, for human beings for one or more specific medical purposes, including diagnosis, prevention, monitoring, treatment, or alleviation of disease .
-Question: Which products are deemed to be medical devices?
+   - **Qdrant:**
+     ```bash
+     docker pull qdrant/qdrant
+     docker run -d -p 6333:6333 -p 6334:6334 qdrant/qdrant
+     ```
 
-Answer: The following products shall also be deemed to be medical devices: devices for the control or support of conception; products specifically intended for the cleaning, disinfection or sterilization of devices .
-Question: What is a "custom-made device" as defined in the Regulation?
+   - **LLMSherpa:**
+     ```bash
+     docker pull ghcr.io/nlmatics/nlm-ingestor:latest
+     docker run -d -p 5010:5001 ghcr.io/nlmatics/nlm-ingestor:latest
+     ```
 
-Answer: A "custom-made device" means any device specifically made in accordance with a written prescription of any person authorized by national law, intended for the sole use of a particular patient exclusively to meet their individual conditions and needs .
-Question: What are "implantable devices" according to the Regulation?
+   - **OpenSearch:**
+     ```bash
+     docker pull opensearchproject/opensearch:2
+     docker run -d -p 9200:9200 -p 9600:9600 -e "discovery.type=single-node" -e "OPENSEARCH_INITIAL_ADMIN_PASSWORD=Master_pw_123!#" opensearchproject/opensearch:latest
+     ```
 
-Answer: An "implantable device" means any device intended to be totally introduced into the human body or to replace an epithelial surface, and intended to remain in place after the procedure .
-Question: Does this Regulation apply to cosmetic products?
+4. **Executar o arquivo `app.py`:**
+   ```bash
+   python app.py
 
-Answer: No, this Regulation does not apply to cosmetic products covered by Regulation (EC) No 1223/2009 .
+5. **Interação com a interface**
 
-Question: What is the definition of "Unique Device Identifier" (UDI)?
+    Na interface do aplicativo, escolha a opção **Upload**.  
+    Selecione o ficheiro **"CELEX"**.  
+    Aguarde até que apareça uma janela indicando que a operação foi concluída com sucesso.
 
-Answer: "Unique Device Identifier" (UDI) means a series of numeric or alphanumeric characters that is created through internationally accepted device identification and coding standards and that allows unambiguous identification of specific devices on the market .
+6. **Fazer perguntas**
+
+    Após o upload, você pode fazer perguntas e aguardar as respostas.
+
+7. **Gestão de Documentos**
+
+    Para eliminar ou inserir novos documentos:
+
+    A forma mais fácil é eliminar os containers do Qdrant e OpenSearch e criá-los novamente. Você pode fazer isso com os seguintes comandos:
+
+    ```bash
+    docker rm -f <container_id>
