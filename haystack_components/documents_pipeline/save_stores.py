@@ -143,6 +143,3 @@ def delete_Osearch_doc(doc_id):
     document_store=get_Osearch_store()
     document_store.delete_documents([doc_id])
     return
-## Descomentar e correr o ficheiro para eliminar da base de dados OpenSearch
-
-#delete_documents_from_opensearch() 

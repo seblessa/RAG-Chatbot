@@ -37,7 +37,7 @@ examples = []
 class ASK_LLM:
     """
 
-    Classe que usa um modelo gpt3.5 azure-openai para modificar a prompt do utilizador e devolver um json com duas prompts distintas uma para a pesquisa vetorial e outra para a pesquisa por keywords.
+     modificar a prompt do utilizador e devolver um json com duas prompts distintas uma para a pesquisa vetorial e outra para a pesquisa por keywords.
 
     Retorna um dicionário prompt_mod que contem a prompt original e as duas prompts novas e que posteriormente vai conter os resultados e os scores.
 
@@ -72,8 +72,6 @@ class ASK_LLM:
         # Imprimir toda a resposta junta
         return full_response
 
-    def build_context(self,context):
-        return
 
     @component.output_types(response=Dict)
     def run(self, prompt: List, context): 
@@ -95,12 +93,12 @@ def get_limited_context(context):
     total_tokens = 0
 
     for text, count in zip(conteudo, token_counts):
-        # Verifica se adicionar o próximo documento ultrapassará o limite
+       
         if total_tokens + count <= 1000:
             limited_context.append(text)
             total_tokens += count
         else:
-            break  # Sai do loop se o limite for alcançado
-
+            break  
+        
     print("Número total de tokens após limitação:", total_tokens)
     return limited_context

@@ -55,7 +55,6 @@ def upload_file():
 
     # Executar a pipeline nos documentos
     try:
-        print("aquiiuii")
         print(filepath)
         result = document_processor_pipeline(filepath)
 
