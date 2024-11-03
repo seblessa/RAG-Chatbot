@@ -9,8 +9,7 @@ import torch
 
 from huggingface_hub import InferenceClient
 
-
-
+API_KEY= "CHANGE IT"
 
 # Prompt de sistema para transformar a prompt do user em duas prompts distintas uma para keywords e outra para pesquisa vetorial
 
@@ -51,7 +50,7 @@ class LLMPrompt:
 
 
     def answer_question(self, question, max_length=1000, temperature=0.7):
-        client = InferenceClient(api_key="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")
+        client = InferenceClient(api_key=API_KEY)
 
         messages=[{"role": "system", "content": sys}]+ examples+[{"role": "user", "content": question}]
 
