@@ -8,6 +8,10 @@ from huggingface_hub import InferenceClient
 
 from transformers import AutoTokenizer
 
+
+API_KEY= "CHANGE IT"
+
+
 # Carrega o tokenizer do modelo que estás a usar. Substitui pelo modelo desejado, ex: 'bert-base-uncased'
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
@@ -47,7 +51,7 @@ class ASK_LLM:
     @component.output_types()
     def generate(self, prompt, msg_context):
 
-        client = InferenceClient(api_key="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")
+        client = InferenceClient(api_key=API_KEY)
         joined=" ".join(msg_context)    
         messages=[{"role": "system", "content": sys}]+[{"role": "system", "content": joined}] + [{"role": "user", "content": str(prompt) + "Respond with a brief, precise answer. Avoid unnecessary details and repetitions. Keep it within one or two sentences only."}]
 
