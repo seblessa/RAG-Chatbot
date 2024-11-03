@@ -2,6 +2,10 @@
 
 Este projeto implementa um sistema de RAG utilizando Qdrant, OpenSearch e LLMSherpa para indexação e recuperação de documentos. O sistema permite fazer perguntas a partir de documentos carregados.
 
+**Authors**:
+- [Guilherme Vaz](https://github.com/guilhermevaz8)
+- [Sebastião Santos Lessa](https://github.com/seblessa/)
+
 ## Requisitos
 
 - **Python** 3.12.0
